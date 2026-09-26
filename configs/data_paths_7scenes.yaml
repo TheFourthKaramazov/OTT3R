@@ -1,0 +1,23 @@
+# OTT3R Data Paths Configuration - 7-Scenes Domain Specialization
+#
+# For domain-specific training on 7-Scenes indoor dataset.
+# Outputs to separate directories from main training data.
+#
+# Usage:
+#   python utils/generate_manifest.py --config configs/data_paths_7scenes.yaml
+#
+#   python ott3r/teacher/ott3r_generator.py \
+#       --manifest processed_data/images_7scenes/manifest.csv \
+#       --cache-dir caches/teacher_cache_7scenes
+
+prep:
+  resize_max: 960
+  out_dir: processed_data/images_7scenes
+
+datasets:
+  - name: "7Scenes"
+    root: "dataset/7scenes"
+    pattern: "*/seq-*/frame-*.color.png"
+    sample_frac: 1.0
+    split: "train"
+    split_file: "TrainSplit.txt"

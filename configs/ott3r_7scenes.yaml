@@ -1,0 +1,76 @@
+# OTT3R Training Configuration - 7-Scenes Domain Specialization
+#
+# DINOv2 encoder with lower learning rate for stable domain-specific training.
+#
+# Requires separate manifest and cache generation first:
+#   python ott3r/data/datasets.py --config configs/data_paths_7scenes.yaml
+#   python ott3r/teacher/ott3r_generator.py \
+#       --manifest processed_data/images_7scenes/manifest.csv \
+#       --cache-dir caches/teacher_cache_7scenes
+#   python ott3r/train.py --config configs/ott3r_7scenes.yaml
+
+model:
+  enc_embed_dim: 384
+  dec_embed_dim: 512
+  dec_depth: 12
+  dec_num_heads: 8
+  task_dec_dim: 512
+  task_dec_depth: 4
+  task_dec_heads: 8
+  camera_dec_dim: 512
+  camera_dec_heads: 8
+  camera_dec_depth: 4
+  camera_out_dim: 384
+  num_register_tokens: 5
+  load_pretrained_encoder: true
+  encoder_type: "dinov2"
+  num_views: 20
+
+loss:
+  include_normal_loss: true
+  include_camera_loss: true
+  include_conf_loss: true
+  camera_loss_weight: 0.1
+  conf_loss_weight: 0.05
+  conf_loss_type: "hybrid"
+
+training:
+  max_epochs: 200
+  batch_size: 2
+  num_gpus: 2
+  gpu_id: 0
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  warmup_steps: 300
+  min_lr: 1.0e-6
+  max_grad_norm: 1.0
+  accumulate_grad_batches: 4
+  log_every_n_steps: 50
+  precision: "bf16-mixed"
+
+data:
+  cache_dir: "caches/teacher_cache_7scenes"
+  num_workers: 8
+  pin_memory: true
+  persistent_workers: true
+  prefetch_factor: 2
+
+memory:
+  memory_cleanup_freq: 50
+  log_memory_usage: true
+  max_memory_gb: 45
+  gpu_memory_threshold: 95.0
+
+checkpointing:
+  save_every_n_epochs: 10
+  save_top_k: 20
+  monitor: "train/loss"
+  mode: "min"
+
+logging:
+  log_dir: "ott3r_7scenes"
+  experiment_name: "ott3r_7scenes"
+
+output_dir: "ott3r_7scenes"
+
+seed: 42

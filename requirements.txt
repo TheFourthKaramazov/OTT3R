@@ -1,0 +1,19 @@
+# OTT3R Dependencies
+
+# Core ML packages
+lightning>=2.0.0
+transformers>=4.40
+accelerate>=0.29
+
+# Visualization
+matplotlib>=3.5.0
+open3d>=0.17.0
+
+# System monitoring
+psutil>=5.9.0
+nvidia-ml-py>=11.525.0
+tqdm>=4.64
+
+# Configuration and data
+PyYAML>=6.0
+pandas>=1.3.0

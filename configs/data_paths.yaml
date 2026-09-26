@@ -1,0 +1,58 @@
+# OTT3R Data Paths Configuration
+#
+# Defines paths to training datasets for manifest generation.
+# Update the 'root' paths to match your local dataset locations.
+
+prep:
+  resize_max: 960
+  out_dir: processed_data/images
+
+datasets:
+  # CO3D Single Sequence - Filtered complete sequences
+  - name: "CO3D_single"
+    root: "dataset/co3d_single_sequence"
+    pattern: "**/images/*.jpg"
+    sample_frac: 1.0
+    split: "train"
+
+  # CO3D Full - Object-centric multi-view scenes
+  - name: "CO3D"
+    root: "dataset/co3d"
+    pattern: "**/images/*.jpg"
+    sample_frac: 0.4
+    split: "train"
+
+  # ARKitScenes - Real indoor rooms with LiDAR
+  - name: "ARKitScenes"
+    root: "dataset/arkitscenes/raw/Training"
+    pattern: "*/vga_wide/*.png"
+    sample_frac: 1.0
+    split: "train"
+
+  # MegaDepth - Outdoor reconstructions
+  - name: "MegaDepth"
+    root: "dataset/megadepth"
+    pattern: "*/dense*/imgs/*.jpg"
+    sample_frac: 1.0
+    split: "train"
+
+  # BlendedMVS - Synthetic scenes
+  - name: "BlendedMVS"
+    root: "dataset/blendedmvs"
+    pattern: "*/blended_images/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].jpg"
+    sample_frac: 1.0
+    split: "train"
+
+  # Habitat - Synthetic indoor rooms (Matterport3D)
+  - name: "Habitat"
+    root: "dataset/habitat"
+    pattern: "*/matterport_color_images/*.jpg"
+    sample_frac: 1.0
+    split: "train"
+
+  # ScanNet++ - Real indoor DSLR captures
+  - name: "ScanNetPP"
+    root: "dataset/scannetpp"
+    pattern: "*/dslr/resized_images/*.JPG"
+    sample_frac: 1.0
+    split: "train"
