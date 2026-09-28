@@ -110,11 +110,8 @@ results/
 # -----------------------------------------------------------------------------
 test_samples/
 
-# Eval datasets (158GB+)
-distill3r/eval/dataset/
-
-# Data directory
-data/
+# Don't ignore ott3r/data/ (source code)
+!ott3r/data/
 
 # Large files
 *.pdf
