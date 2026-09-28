@@ -1,3 +1,4 @@
 [submodule "external/pi3"]
 	path = external/pi3
 	url = https://github.com/yyfz/Pi3.git
+	branch = training
