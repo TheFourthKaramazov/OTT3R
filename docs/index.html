@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTT3R: Multi-View 3D Reconstruction and Fast Dataset Generation at 1% Compute</title>
+<meta name="description" content="OTT3R (ACCV 2026): a knowledge-distillation framework that compresses a 959M feed-forward 3D reconstruction model into a 102M RGB-only student on a single 2-GPU workstation, with a fast neural pseudo-label pipeline that replaces COLMAP.">
+<style>
+  :root{
+    --ink:#15202b; --muted:#5b6b7a; --line:#e5e9ee; --bg:#ffffff; --soft:#f6f8fa;
+    --accent:#0f766e; --accent-2:#0d5c56; --chip:#eef4f3;
+    --maxw:900px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; color:var(--ink); background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; font-size:17px;
+  }
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+  h1,h2,h3{line-height:1.25; color:var(--ink)}
+  h2{font-size:1.5rem; margin:2.6rem 0 1rem; padding-bottom:.4rem; border-bottom:1px solid var(--line)}
+  h3{font-size:1.1rem; margin:1.6rem 0 .4rem}
+  p{margin:.7rem 0}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+  /* Hero */
+  header.hero{
+    background:linear-gradient(180deg,#f3f8f7 0%,#ffffff 100%);
+    border-bottom:1px solid var(--line);
+    padding:56px 0 40px; text-align:center;
+  }
+  .venue{display:inline-block; font-size:.8rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent-2); background:var(--chip); border:1px solid #d8e6e3;
+    padding:4px 12px; border-radius:999px; font-weight:600}
+  .hero h1{font-size:2.15rem; margin:.7rem auto .3rem; max-width:24ch}
+  .authors{font-size:1.08rem; margin:.5rem 0 .1rem}
+  .authors a{color:var(--ink); border-bottom:1px dotted var(--muted)}
+  .affil{color:var(--muted); font-size:.98rem; margin:.2rem 0 1.2rem}
+  .btns{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:14px}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:10px;
+    background:var(--ink); color:#fff; font-weight:600; font-size:.95rem; border:1px solid var(--ink)}
+  .btn:hover{text-decoration:none; background:#0b1620}
+  .btn.ghost{background:#fff; color:var(--ink); border-color:var(--line)}
+  .btn.ghost:hover{background:var(--soft)}
+  .btn.disabled{background:#eef1f4; color:#9aa7b3; border-color:var(--line); cursor:default}
+
+  /* Teaser row */
+  .teaser{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:26px}
+  .teaser img{width:100%; aspect-ratio:4/3; object-fit:cover; border:1px solid var(--line); border-radius:10px; background:#fff}
+
+  /* Highlights */
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:8px}
+  .card{background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:16px}
+  .card .big{font-size:1.5rem; font-weight:700; color:var(--accent-2)}
+  .card .lab{font-size:.9rem; color:var(--muted)}
+
+  /* Figures */
+  figure{margin:1.4rem 0; text-align:center}
+  figure img{max-width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+  figcaption{font-size:.9rem; color:var(--muted); margin-top:.6rem; text-align:left}
+
+  /* Image grids */
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  .grid4 img{width:100%; border:1px solid var(--line); border-radius:8px; background:#fff; display:block}
+  .grid4 .rowlab{grid-column:1 / -1; font-size:.85rem; color:var(--muted); font-weight:600; margin-top:.3rem}
+  .colcaps{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; font-size:.82rem; color:var(--muted); text-align:center; margin-top:.3rem}
+
+  .pairgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .pairgrid img{width:100%; border:1px solid var(--line); border-radius:8px; background:#fff; display:block}
+  .pairgrid .cap{font-size:.82rem; color:var(--muted); text-align:center}
+
+  .abstract{background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:18px 20px}
+
+  /* Compare table */
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse; width:100%; font-size:.95rem; margin-top:.4rem}
+  th,td{padding:9px 12px; border-bottom:1px solid var(--line); text-align:left}
+  th{background:var(--soft); font-weight:600}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+  tr.ours{background:#f0f8f6}
+  tr.ours td{font-weight:600}
+
+  pre.bib{background:#0f172a; color:#e2e8f0; border-radius:12px; padding:16px 18px; overflow-x:auto; font-size:.86rem; line-height:1.5}
+  pre.cmd{background:var(--soft); border:1px solid var(--line); color:var(--ink); border-radius:10px; padding:14px 16px; overflow-x:auto; font-size:.86rem; line-height:1.55}
+
+  footer{border-top:1px solid var(--line); margin-top:40px; padding:26px 0 44px; color:var(--muted); font-size:.92rem}
+  .note{font-size:.9rem; color:var(--muted)}
+
+  @media (max-width:680px){
+    .hero h1{font-size:1.7rem}
+    .cards{grid-template-columns:1fr 1fr}
+    .teaser{grid-template-columns:1fr 1fr}
+    body{font-size:16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="venue">ACCV 2026</span>
+    <h1>OTT3R: Multi-View 3D Reconstruction and Fast Dataset Generation at 1% Compute</h1>
+    <div class="authors">
+      <a href="mailto:brandon.leblanc@mail.concordia.ca">Brandon Leblanc</a> &nbsp;·&nbsp;
+      <a href="mailto:charalambos.poullis@concordia.ca">Charalambos Poullis</a>
+    </div>
+    <div class="affil">Immersive and Creative Technologies (ICT) Lab · Concordia University · Montreal, Canada</div>
+    <div class="btns">
+      <span class="btn disabled" title="Link coming soon">📄 Paper (soon)</span>
+      <span class="btn disabled" title="Link coming soon">📚 arXiv (soon)</span>
+      <a class="btn ghost" href="https://github.com/TheFourthKaramazov/OTT3R">💻 Code</a>
+      <a class="btn ghost" href="#bibtex">❝ BibTeX</a>
+    </div>
+    <div class="teaser">
+      <img src="assets/car.png" alt="OTT3R reconstruction of an outdoor object (car).">
+      <img src="assets/living1.png" alt="OTT3R reconstruction of an indoor room.">
+      <img src="assets/teddy2.png" alt="OTT3R reconstruction of an object-centric capture (teddy).">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>Overview</h2>
+    <div class="cards">
+      <div class="card"><div class="big">9.4×</div><div class="lab">Compression — 959M teacher (π³) into a 102M student</div></div>
+      <div class="card"><div class="big">RGB only</div><div class="lab">No depth, sensors, poses, or Structure-from-Motion</div></div>
+      <div class="card"><div class="big">~1% compute</div><div class="lab">1.6% of VGGT to train the general student, 0.2% to specialize</div></div>
+      <div class="card"><div class="big">274 FPS</div><div class="lab">Up to 7× faster than the teacher at 2–4× less memory</div></div>
+      <div class="card"><div class="big">4× vs COLMAP</div><div class="lab">Domain student accuracy on 7-Scenes at 980× throughput</div></div>
+      <div class="card"><div class="big">667K in 3.5 h</div><div class="lab">Pseudo-label pipeline on two commodity GPUs</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Abstract</h2>
+    <div class="abstract">
+      <p>Feed-forward 3D reconstruction models have achieved impressive performance by scaling model and dataset size,
+      but their cost excludes most research groups and precludes edge deployment. Additionally, generating 3D supervision
+      without sensors still relies on slow, unreliable Structure-from-Motion, as the community lacks a COLMAP-like system
+      for neural 3D pseudo-label generation. We present OTT3R (RGB-Only Tiny Transformer for 3D
+      Reconstruction), a knowledge distillation framework that addresses both problems on a single workstation equipped
+      with 2 GPUs. Distilling π³ (959M parameters) into a 102M-parameter student yields
+      9.4× compression and up to 7× faster inference, trained at 1.6% of VGGT's training compute. An integrated
+      pseudo-label pipeline offers a reliable, high-throughput alternative to COLMAP, generating dense per-pixel point
+      maps and SE(3) camera poses for a 667K-image corpus in 3.5 hours on two commodity GPUs and succeeding on every
+      sequence we tested, including those where COLMAP fails. The general student tracks the teacher on in-distribution
+      monocular depth and, zero-shot, outperforms COLMAP on 7-Scenes and on DTU completion, but it does not replace the
+      teacher on out-of-distribution multi-view geometry. The deployable artifact is the <em>domain-specialized
+      student</em>: after specialization at 0.2% compute, it is 4× more accurate than COLMAP on 7-Scenes at 980×
+      throughput, with near-teacher completion.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Method</h2>
+    <p>Cache generation and student training are fully decoupled: the teacher π³ is run once over all source datasets
+    and its outputs are quantized and stored, after which training reads only from this cache and the teacher is never
+    invoked again. This is what makes single-workstation training tractable: the 959M-parameter teacher forward pass, the
+    dominant cost, is amortized across every epoch rather than repeated.</p>
+
+    <h3>1 · Pseudo-label generation pipeline</h3>
+    <figure>
+      <img src="assets/pseudo_label_gen.png" alt="Pseudo-label generation pipeline: RGB images sampled and passed through the Pi3 teacher, whose outputs are quality-filtered, compressed, and cached.">
+      <figcaption><strong>Figure 1.</strong> Given RGB images, we generate dense 3D supervision using π³. Our
+      configurable sampling strategy selects frames with either strided (hard) or temporal (easy) spacing, and teacher
+      outputs are compressed and cached for efficient student training. Unlike COLMAP, our pipeline requires no parameter
+      tuning, is orders of magnitude faster, and did not fail on any sequence we tested, including the low-resolution and
+      low-texture sequences where SfM breaks down. The pipeline generates dense supervision for a 667K-image corpus in
+      3.5&nbsp;hours on two RTX 6000 Ada GPUs and stores 667K images in 283&nbsp;GB, a 3× improvement in per-image cost
+      achieved by recovering global geometry from local points and poses rather than caching it explicitly.</figcaption>
+    </figure>
+
+    <h3>2 · Offline distillation of a compact student</h3>
+    <figure>
+      <img src="assets/train.png" alt="Offline distillation: the teacher populates a cache once; the student trains against the cache with gradients flowing only through the student.">
+      <figcaption><strong>Figure 2.</strong> The teacher is run once to populate an offline cache of quantized point
+      maps, confidence, and SE(3) poses; the student then trains against this cache without re-invoking the teacher.
+      Gradients update only the student. The 102M student uses a DUNE ViT-Small encoder shared across views, a multi-layer
+      transformer with an alternating attention pattern for cross-view reasoning, and three parallel decoders for local
+      points, confidence, and SE(3) camera poses. It is the first distillation framework with direct SE(3) pose
+      supervision via teacher outputs, enabling multi-view reconstruction, complemented by a hybrid confidence loss for
+      calibrated uncertainty. Because supervision is fully precomputed, memory and wall-clock are governed by the 102M
+      student alone rather than the teacher.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Qualitative results</h2>
+
+    <h3>Multi-view reconstruction on 7-Scenes</h3>
+    <figure>
+      <div class="grid4">
+        <img src="assets/teacher_chess.png" alt="Teacher reconstruction, Chess">
+        <img src="assets/teacher_fire.png" alt="Teacher reconstruction, Fire">
+        <img src="assets/teacher_office.png" alt="Teacher reconstruction, Office">
+        <img src="assets/teacher_kitchen.png" alt="Teacher reconstruction, Kitchen">
+        <img src="assets/student_chess.png" alt="Student reconstruction, Chess">
+        <img src="assets/student_fire.png" alt="Student reconstruction, Fire">
+        <img src="assets/student_office.png" alt="Student reconstruction, Office">
+        <img src="assets/student_kitchen.png" alt="Student reconstruction, Kitchen">
+      </div>
+      <div class="colcaps"><span>Chess</span><span>Fire</span><span>Office</span><span>Kitchen</span></div>
+      <figcaption>Qualitative multi-view reconstruction on the 7-Scenes test set. Top row: π³ teacher
+      (959M). Bottom row: OTT3R student (102M). Our domain-specific student is 4× more accurate than
+      COLMAP and runs 980× faster, while reaching near-teacher completion at one-seventh the latency.</figcaption>
+    </figure>
+
+    <h3>Sampling strategy: temporal vs. strided (CO3D)</h3>
+    <figure>
+      <div class="pairgrid">
+        <img src="assets/co3d/car2_temp.png" alt="Car, temporal sampling"><img src="assets/co3d/car2_stride.png" alt="Car, strided sampling">
+        <img src="assets/co3d/couch1_temp.png" alt="Couch, temporal sampling"><img src="assets/co3d/couch1_stride.png" alt="Couch, strided sampling">
+        <img src="assets/co3d/hydrant_temp.png" alt="Hydrant, temporal sampling"><img src="assets/co3d/hydrant_stride.png" alt="Hydrant, strided sampling">
+        <div class="cap">temporal (small baseline)</div><div class="cap">strided (wide baseline)</div>
+      </div>
+      <figcaption>Each pair reconstructs the same held-out CO3D sequence from temporal sampling (<em>left</em>,
+      consecutive frames with a small baseline) and strided sampling (<em>right</em>, evenly-spaced frames spanning a wide
+      baseline). Both regimes produce coherent geometry: despite the larger viewpoint changes and higher relative-rotation
+      error of the strided case, its reconstructions remain visually comparable to the small-baseline ones, with the
+      residual pose error manifesting as noise rather than visible structural misalignment.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+
+    <h3>Depth quality</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Dataset</th><th>Model</th><th class="num">Params</th><th class="num">Abs Rel ↓</th><th class="num">δ&lt;1.25 ↑</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ARKitScenes</td><td>π³</td><td class="num">959M</td><td class="num">3.64%</td><td class="num">98.8%</td></tr>
+          <tr class="ours"><td>ARKitScenes</td><td>OTT3R (base)</td><td class="num">102M</td><td class="num">4.91%</td><td class="num">97.0%</td></tr>
+          <tr><td>Habitat</td><td>π³</td><td class="num">959M</td><td class="num">3.96%</td><td class="num">98.3%</td></tr>
+          <tr class="ours"><td>Habitat</td><td>OTT3R (base)</td><td class="num">102M</td><td class="num">7.05%</td><td class="num">93.9%</td></tr>
+          <tr><td>7-Scenes</td><td>π³</td><td class="num">959M</td><td class="num">2.50%</td><td class="num">98.9%</td></tr>
+          <tr class="ours"><td>7-Scenes</td><td>OTT3R (base)</td><td class="num">102M</td><td class="num">13.07%</td><td class="num">85.7%</td></tr>
+          <tr class="ours"><td>7-Scenes</td><td>OTT3R (domain)</td><td class="num">102M</td><td class="num">5.72%</td><td class="num">98.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Student depth quality vs teacher on diverse datasets. The π³ rows also give the quality of our
+    pseudo-labels. Per-view depth is aligned to ground truth by median scaling before computing Abs Rel and δ&lt;1.25.</p>
+
+    <h3>Camera pose on CO3D</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Ref.</th><th class="num">RRA@5 ↑</th><th class="num">RRA@30 ↑</th><th class="num">Med. rot.° ↓</th><th class="num">Med. trans. ↓</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>π³ Teacher</td><td>GT</td><td class="num">—</td><td class="num">99.0</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr class="ours"><td>OTT3R (temporal)</td><td>π³</td><td class="num">61.9</td><td class="num">96.1</td><td class="num">2.8</td><td class="num">0.047</td></tr>
+          <tr class="ours"><td>OTT3R (strided)</td><td>π³</td><td class="num">38.7</td><td class="num">65.3</td><td class="num">15.3</td><td class="num">0.264</td></tr>
+          <tr class="ours"><td>OTT3R (all)</td><td>π³</td><td class="num">50.3</td><td class="num">80.7</td><td class="num">4.9</td><td class="num">0.081</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The teacher is measured against ground truth; student rows measure agreement with the teacher poses it
+    distills, not absolute accuracy. Median translation in teacher scale.</p>
+
+    <h3>Inference efficiency</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th><th class="num">Params</th>
+            <th class="num">Lat. N=32</th><th class="num">N=64</th><th class="num">N=128</th>
+            <th class="num">Mem. N=32</th><th class="num">N=64</th><th class="num">N=128</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>VGGT</td><td class="num">1B</td><td class="num">2.28</td><td class="num">6.40</td><td class="num">OOM</td><td class="num">33.98</td><td class="num">38.41</td><td class="num">OOM</td></tr>
+          <tr><td>Fast3R</td><td class="num">650M</td><td class="num">1.14</td><td class="num">3.26</td><td class="num">10.11</td><td class="num">12.11</td><td class="num">21.11</td><td class="num">44.36</td></tr>
+          <tr><td>π³ Teacher</td><td class="num">959M</td><td class="num">1.49</td><td class="num">4.30</td><td class="num">12.82</td><td class="num">7.07</td><td class="num">8.99</td><td class="num">12.34</td></tr>
+          <tr><td>Distill3R</td><td class="num">72M</td><td class="num">0.41</td><td class="num">1.02</td><td class="num">2.69</td><td class="num">9.97</td><td class="num">21.80</td><td class="num">31.90</td></tr>
+          <tr class="ours"><td>OTT3R</td><td class="num">102M</td><td class="num">0.24</td><td class="num">0.68</td><td class="num">2.20</td><td class="num">1.83</td><td class="num">2.93</td><td class="num">5.20</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Inference latency (s) and peak memory (GB) on RTX 6000 Ada at 518×224, across view counts N.
+    OTT3R is 6.2× faster than its teacher at 32 views using roughly a quarter of the memory; the gap widens with sequence
+    length.</p>
+
+    <h3>Cache generation scaling</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th class="num">GPUs</th><th class="num">Workers</th><th class="num">Throughput (img/s)</th><th class="num">Full cache</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="num">1</td><td class="num">23.1</td><td class="num">7h 44m</td></tr>
+          <tr><td class="num">1</td><td class="num">2</td><td class="num">23.0</td><td class="num">7h 58m</td></tr>
+          <tr><td class="num">2</td><td class="num">1</td><td class="num">22.9</td><td class="num">3h 50m</td></tr>
+          <tr><td class="num">2</td><td class="num">2</td><td class="num">22.9</td><td class="num">3h 37m</td></tr>
+          <tr class="ours"><td class="num">2</td><td class="num">16</td><td class="num">22.5</td><td class="num">3h 20m</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Cache generation scaling on RTX 6000 Ada and wall-clock for the full 667K-image cache. Generation is
+    GPU-bound, so throughput is stable across worker counts and wall-clock scales linearly with GPU count.</p>
+  </section>
+
+  <section>
+    <h2>Code &amp; usage</h2>
+    <p>Generate a manifest, cache teacher pseudo-labels once, then distill the student. Any practitioner can specialize a
+    compact 3D reconstruction model to their target domain in under a day, recovering near-teacher quality at a fraction
+    of the inference cost and compute. See the
+    <a href="https://github.com/TheFourthKaramazov/OTT3R">repository README</a> for full setup and dataset instructions.</p>
+    <pre class="cmd"># 1. Generate the image manifest
+python utils/generate_manifest.py --config configs/data_paths_7scenes.yaml
+
+# 2. Cache teacher (π³) pseudo-labels
+python ott3r/teacher/ott3r_generator.py \
+    --manifest processed_data/images_7scenes/manifest.csv \
+    --cache-dir caches/teacher_cache_7scenes --num-gpus 2
+
+# 3. Train the student
+python ott3r/train.py --config configs/ott3r_7scenes.yaml
+
+# 4. Inference → colored point cloud
+python utils/inference.py path/to/images/ --checkpoint checkpoints/ott3r/last.ckpt</pre>
+  </section>
+
+  <section id="bibtex">
+    <h2>Citation</h2>
+    <pre class="bib">@inproceedings{leblanc2026ott3r,
+  title     = {OTT3R: Multi-View 3D Reconstruction and Fast Dataset Generation at 1\% Compute},
+  author    = {Leblanc, Brandon and Poullis, Charalambos},
+  booktitle = {Proceedings of the Asian Conference on Computer Vision (ACCV)},
+  year      = {2026}
+}</pre>
+  </section>
+
+  <section>
+    <h2>Acknowledgments</h2>
+    <p>OTT3R builds on
+    <a href="https://github.com/yyfz/Pi3">π³ (Pi3)</a>,
+    <a href="https://github.com/naver/dune">DUNE</a>, and
+    <a href="https://github.com/facebookresearch/dinov2">DINOv2</a>. We thank their authors for making their work
+    publicly available. This research was supported in part by the Natural Sciences and Engineering Research Council of
+    Canada (NSERC DG RGPIN-2021-03479 and NSERC CGS-M).</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Immersive and Creative Technologies (ICT) Lab, Concordia University ·
+    <a href="https://github.com/TheFourthKaramazov/OTT3R">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
