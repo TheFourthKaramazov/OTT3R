@@ -28,6 +28,10 @@ conda env create -f environment.yml
 conda activate ott3r
 ```
 
+### 3. Encoder weights
+
+DUNE and DINOv2 weights download automatically via `torch.hub` on first run. To use a different encoder, place weights in `pretrained_models/` and modify `ott3r/student/model.py` accordingly (ensure patch size matches).
+
 ---
 
 ## Domain-Specific Training (7-Scenes)
