@@ -128,7 +128,7 @@
   <section>
     <h2>Overview</h2>
     <div class="cards">
-      <div class="card"><div class="big">9.4×</div><div class="lab">Compression — 959M teacher (π³) into a 102M student</div></div>
+      <div class="card"><div class="big">9.4×</div><div class="lab">Compression: 959M teacher (π³) into a 102M student</div></div>
       <div class="card"><div class="big">RGB only</div><div class="lab">No depth, sensors, poses, or Structure-from-Motion</div></div>
       <div class="card"><div class="big">~1% compute</div><div class="lab">1.6% of VGGT to train the general student, 0.2% to specialize</div></div>
       <div class="card"><div class="big">274 FPS</div><div class="lab">Up to 7× faster than the teacher at 2–4× less memory</div></div>
@@ -311,22 +311,17 @@
 
   <section>
     <h2>Code &amp; usage</h2>
-    <p>Generate a manifest, cache teacher pseudo-labels once, then distill the student. Any practitioner can specialize a
-    compact 3D reconstruction model to their target domain in under a day, recovering near-teacher quality at a fraction
-    of the inference cost and compute. See the
+    <p>The pseudo-label generator is the reusable core: run the π³ teacher over any RGB images and cache dense point
+    maps, SE(3) poses, and confidence, with no COLMAP and no calibration. See the
     <a href="https://github.com/TheFourthKaramazov/OTT3R">repository README</a> for full setup and dataset instructions.</p>
-    <pre class="cmd"># 1. Generate the image manifest
-python utils/generate_manifest.py --config configs/data_paths_7scenes.yaml
-
-# 2. Cache teacher (π³) pseudo-labels
+    <pre class="cmd"># Generate pseudo-labels for your own images
+python utils/generate_manifest.py --config configs/data_paths.yaml
 python ott3r/teacher/ott3r_generator.py \
-    --manifest processed_data/images_7scenes/manifest.csv \
-    --cache-dir caches/teacher_cache_7scenes --num-gpus 2
+    --manifest processed_data/images/manifest.csv \
+    --cache-dir caches/my_dataset --num-gpus 2
 
-# 3. Train the student
+# Distill a compact student on the cache
 python ott3r/train.py --config configs/ott3r_7scenes.yaml
-
-# 4. Inference → colored point cloud
 python utils/inference.py path/to/images/ --checkpoint checkpoints/ott3r/last.ckpt</pre>
   </section>
 
