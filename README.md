@@ -4,7 +4,7 @@
 
 Concordia University, ICT Lab
 
-**Paper** (ACCV 2026 — to appear) · [**arXiv**](https://arxiv.org/abs/XXXX.XXXXX) · [**Project Page**](https://thefourthkaramazov.github.io/OTT3R/)
+**Paper** (ACCV 2026 — to appear) · [**arXiv**](https://arxiv.org/abs/2609.36374) · [**Project Page**](https://thefourthkaramazov.github.io/OTT3R/)
 
 ---
 
