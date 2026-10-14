@@ -259,16 +259,6 @@ OTT3R/
 }
 ```
 
-If you use the Pi3 teacher model:
-
-```bibtex
-@inproceedings{fan2025pi3,
-  title={Pi3: Permutation-Invariant Point-wise Learning for 3D Reconstruction},
-  author={Fan, Yiming and others},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2025}
-}
-```
 
 ---
 
